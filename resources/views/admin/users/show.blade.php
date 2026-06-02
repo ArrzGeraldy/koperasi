@@ -32,7 +32,7 @@
           <div class="max-w-7xl mx-auto">
             <!-- Breadcrumb -->
             <div class="flex items-center gap-2 text-sm text-gray-600 mb-4">
-              <a href="{{ route('dashboard') }}" class="hover:text-blue-600">Dashboard</a>
+              {{-- <a href="{{ route('dashboard') }}" class="hover:text-blue-600">Dashboard</a> --}}
               <span>/</span>
               <a href="{{ route('admin.users.index') }}" class="hover:text-blue-600">User</a>
               <span>/</span>
@@ -146,17 +146,34 @@
 
               <!-- Right Column: Financial Info -->
               <div class="space-y-6">
-                <!-- Dana Simpanan -->
-                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
-                  <div class="flex items-center justify-between mb-2">
-                    <h3 class="text-sm font-medium opacity-90">Dana Simpanan</h3>
-                    <svg class="w-6 h-6 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
+                <!-- Simpanan Cards -->
+                @if($user->simpanan)
+                  <div class="space-y-3">
+                    <!-- Simpanan Pokok -->
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-4 text-white">
+                      <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-xs font-medium opacity-90">Simpanan Pokok</h3>
+                      </div>
+                      <p class="text-2xl font-bold">Rp {{ number_format($user->simpanan->simpanan_pokok, 0, ',', '.') }}</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-4 text-white">
+                      <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-xs font-medium opacity-90">Simpanan Wajib</h3>
+                      </div>
+                      <p class="text-2xl font-bold">Rp {{ number_format($user->simpanan->simpanan_wajib, 0, ',', '.') }}</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-4 text-white">
+                      <div class="flex items-center justify-between mb-1">
+                        <h3 class="text-xs font-medium opacity-90">Simpanan Sukarela</h3>
+                      </div>
+                      <p class="text-2xl font-bold">Rp {{ number_format($user->simpanan->simpanan_sukarela, 0, ',', '.') }}</p>
+                    </div>
                   </div>
-                  <p class="text-3xl font-bold mb-1">Rp {{ number_format($user->dana_simpanan, 0, ',', '.') }}</p>
-                  <p class="text-xs opacity-75">Saldo simpanan saat ini</p>
-                </div>
+                @else
+                  <div class="bg-gray-50 rounded-lg p-4 text-center text-gray-500">
+                    <p class="text-sm">Belum ada data simpanan</p>
+                  </div>
+                @endif
 
                 <!-- Limit Pinjaman -->
                 <div class="bg-white rounded-lg shadow p-6">
@@ -170,9 +187,7 @@
                           <span class="text-sm text-gray-600">Limit Maksimal</span>
                           <span class="text-lg font-bold text-gray-900">Rp {{ number_format($user->limitPinjaman->max_limit, 0, ',', '.') }}</span>
                         </div>
-                        <div class="text-xs text-gray-500">
-                          3x dari dana simpanan
-                        </div>
+                     
                       </div>
 
                       <div class="border-t pt-4">

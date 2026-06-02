@@ -136,18 +136,42 @@
               </div>
               </div>
 
-              <!-- Dana Simpanan -->
-              <div class="mb-6">
-                <label for="dana_simpanan" class="block text-sm font-medium text-gray-700 mb-2">Dana Simpanan <span class="text-red-500">*</span></label>
-                <div class="relative">
-                  <span class="absolute left-4 top-2.5 text-gray-500 font-medium">Rp</span>
-                  <input type="number" name="dana_simpanan" id="dana_simpanan" value="{{ old('dana_simpanan', $user->dana_simpanan) }}" placeholder="0" required min="0" step="1000"
-                    class="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('dana_simpanan') border-red-500 @enderror">
+              <!-- Simpanan Section -->
+              <div class="mb-6 border border-gray-300 rounded-lg p-4 bg-gray-50">
+                <h3 class="text-sm font-medium text-gray-700 mb-4">Data Simpanan</h3>
+                <div class="grid lg:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-2">Simpanan Pokok</label>
+                    <div class="relative">
+                      <span class="absolute left-4 top-2.5 text-gray-500 font-medium">Rp</span>
+                      <input type="number" name="simpanan_pokok" value="{{ old('simpanan_pokok', $user->simpanan?->simpanan_pokok ?? 0) }}" placeholder="0" min="0" step="1000" class="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('simpanan_pokok') border-red-500 @enderror">
+                    </div>
+                    @error('simpanan_pokok')
+                      <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-2">Simpanan Wajib</label>
+                    <div class="relative">
+                      <span class="absolute left-4 top-2.5 text-gray-500 font-medium">Rp</span>
+                      <input type="number" name="simpanan_wajib" value="{{ old('simpanan_wajib', $user->simpanan?->simpanan_wajib ?? 0) }}" placeholder="0" min="0" step="1000" class="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('simpanan_wajib') border-red-500 @enderror">
+                    </div>
+                    @error('simpanan_wajib')
+                      <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-2">Simpanan Sukarela</label>
+                    <div class="relative">
+                      <span class="absolute left-4 top-2.5 text-gray-500 font-medium">Rp</span>
+                      <input type="number" name="simpanan_sukarela" value="{{ old('simpanan_sukarela', $user->simpanan?->simpanan_sukarela ?? 0) }}" placeholder="0" min="0" step="1000" class="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 @error('simpanan_sukarela') border-red-500 @enderror">
+                    </div>
+                    @error('simpanan_sukarela')
+                      <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                  </div>
                 </div>
-                @error('dana_simpanan')
-                  <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                @enderror
-                <p class="text-xs text-gray-500 mt-1">Jika diubah, limit pinjaman akan otomatis ter-update (3x dana simpanan)</p>
+                <p class="text-xs text-gray-500 mt-3">Limit pinjaman: Simpanan Wajib + Simpanan Sukarela</p>
               </div>
 
               <!-- Rekening Section -->

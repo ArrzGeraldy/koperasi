@@ -124,7 +124,7 @@ class PinjamanController extends Controller
 
             // Default settings
             $tenor = 10; // bulan
-            $bungaTotal = 30; // persen (30% dari pokok)
+            $bungaTotal = 20; // persen (20% dari pokok)
             
             // Calculate
             $totalBunga = ($validated['jumlah_pinjaman'] * $bungaTotal / 100);

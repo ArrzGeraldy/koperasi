@@ -4,6 +4,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PinjamanController;
 use App\Http\Controllers\PembayaranCicilanController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SetorSimpananController;
+use App\Http\Controllers\SimpananController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,6 +21,14 @@ require __DIR__.'/auth.php';
 Route::middleware('auth')->name('anggota.')->group(function () {
     // Dashboard
     Route::get('/', [DashboardController::class, 'anggota'])->name('dashboard');
+    
+    // simpanan
+    Route::get('/anggota/simpanan', [SimpananController::class, 'indexAnggota'])->name('simpanan.index');
+
+    // setor
+    Route::get('/anggota/setor', [SetorSimpananController::class, 'create'])->name('setor.create');
+    Route::post('/anggota/setor', [SetorSimpananController::class, 'store'])->name('setor.store');
+
     
     // Pengajuan Pinjaman
     Route::get('/anggota/pengajuan-pinjaman', [PinjamanController::class, 'create'])->name('pengajuan.create');
@@ -48,6 +58,13 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
         Route::get('/{id}/approve-form', [PinjamanController::class, 'approveForm'])->name('approve-form');
         Route::post('/{id}/approve', [PinjamanController::class, 'approve'])->name('approve');
         Route::post('/{id}/reject', [PinjamanController::class, 'reject'])->name('reject');
+    });
+
+    // setor
+    Route::prefix('setor')->name('setor.')->group(function () {
+        Route::get('/', [SetorSimpananController::class, 'indexAdmin'])->name('index');
+        Route::put('/{id}/reject', [SetorSimpananController::class, 'reject'])->name('reject');
+        Route::put('/{id}/verify', [SetorSimpananController::class, 'verify'])->name('verify');
     });
     
     // Pembayaran Cicilan Management

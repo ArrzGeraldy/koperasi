@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('password');
             $table->string('phone')->nullable();
             $table->text('address')->nullable();
-            $table->decimal('dana_simpanan', 15, 2)->default(0);
             $table->string('role')->default('member');
             $table->enum('status', ['pending', 'active', 'inactive'])->default('pending');
             $table->rememberToken();

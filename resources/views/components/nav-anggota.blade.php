@@ -23,6 +23,9 @@
                         <a href="{{ route('anggota.riwayat') }}" class="px-4 py-2 rounded-lg {{ request()->is('anggota/riwayat') ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }} font-medium transition duration-200">
                             Riwayat Pinjaman
                         </a>
+                        <a href="{{ route('anggota.simpanan.index') }}" class="px-4 py-2 rounded-lg {{ request()->is('anggota/simpanan') ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }} font-medium transition duration-200">
+                            Simpanan
+                        </a>
                     
                     </div>
 
@@ -59,6 +62,9 @@
                         </a>
                         <a href="{{ route('anggota.riwayat') }}" class="px-4 py-2 rounded-lg {{ request()->is('anggota/riwayat') ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }} font-medium transition duration-200">
                             Riwayat Pinjaman
+                        </a>
+                        <a href="{{ route('anggota.simpanan.index') }}" class="px-4 py-2 rounded-lg {{ request()->is('anggota/riwayat') ? 'text-blue-600 bg-blue-50' : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600' }} font-medium transition duration-200">
+                            Simpanan
                         </a>
                         <div class="border-t border-gray-200 pt-4 mt-2">
                             <div class="flex items-center space-x-3 px-4">

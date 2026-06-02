@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsAppservices
 {
+    protected static $token = "KrTJm7KroExi4GQjmGPj";
     private static function normalizePhoneNumber($no): string
     {
         $no = (string) $no;
@@ -49,7 +50,32 @@ class WhatsAppservices
             }
 
             $res = Http::withHeaders([
-                'Authorization' => "KrTJm7KroExi4GQjmGPj"
+                'Authorization' => self::$token
+            ])->post('https://api.fonnte.com/send',[
+                "target" => $target,
+                "message" => $message,
+            ]);
+            Log::info($res->body());
+        } catch (\Exception $e) {
+            //throw $th;
+            Log::error($e->getMessage());
+        }
+
+    }
+    public static function sendToAdmin($message)
+    {
+        try {
+            //code...
+            $noAdmin = "08888406599";
+            $target = self::normalizePhoneNumber($noAdmin);
+
+            if ($target === '') {
+                Log::warning('WhatsAppservices::sendToAdmin called with empty/invalid target', ['no' => $noAdmin]);
+                return;
+            }
+
+            $res = Http::withHeaders([
+                'Authorization' => self::$token
             ])->post('https://api.fonnte.com/send',[
                 "target" => $target,
                 "message" => $message,

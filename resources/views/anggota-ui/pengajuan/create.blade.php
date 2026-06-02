@@ -87,7 +87,7 @@
                                 </div>
                                 <div class="p-4 bg-gray-50 rounded-lg border-2 border-gray-100">
                                     <label class="block text-xs font-medium text-gray-500 mb-1">Bunga Total</label>
-                                    <p class="text-2xl font-bold text-gray-900">30%</p>
+                                    <p class="text-2xl font-bold text-gray-900">20%</p>
                                 </div>
                             </div>
 

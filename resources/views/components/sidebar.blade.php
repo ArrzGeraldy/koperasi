@@ -14,7 +14,7 @@
               clip-rule="evenodd"
             />
           </svg>
-          <span class="text-xl font-bold">Koperasi</span>
+          <span class="text-xl font-bold">{{ config('app.name') }}</span>
 
 
         </div>
@@ -128,6 +128,17 @@
             </svg>
             Pinjaman Aktif
           </a>
+
+          {{-- stor --}}
+        <a href="{{ route('admin.setor.index') }}"
+          class="flex items-center px-4 py-3 mb-2 text-blue-100 rounded-lg transition {{ request()->is('admin/setor*') ? 'bg-blue-700' : 'hover:bg-blue-700' }}">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z"></path>
+            </svg>
+            Notifikasi Setoran
+        </a>
+        {{-- notif pembayran --}}
           <a
             href="{{ route('admin.pembayaran-cicilan.notif.index') }}"
           class="flex items-center px-4 py-3 mb-2 text-blue-100 rounded-lg  transition {{ request()->is('admin/pembayaran-cicilan/notif') ? 'bg-blue-700' : 'hover:bg-blue-700' }}"

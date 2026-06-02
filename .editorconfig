@@ -13,6 +13,8 @@ trim_trailing_whitespace = false
 
 [*.blade.php]
 indent_size = 2
+[*.html]
+indent_size = 2
 
 
 [*.{yml,yaml}]

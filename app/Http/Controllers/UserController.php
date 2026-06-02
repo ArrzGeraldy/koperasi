@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Rekening;
 use App\Models\LimitPinjaman;
+use App\Models\Simpanan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -70,9 +71,13 @@ class UserController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
-            'dana_simpanan' => 'required|numeric|min:0',
             'role' => ['required', Rule::in(['admin', 'member'])],
             'status' => ['nullable', Rule::in(['pending', 'active', 'inactive'])],
+            
+            // Validasi simpanan
+            'simpanan_pokok' => 'required|numeric|min:0',
+            'simpanan_wajib' => 'required|numeric|min:0',
+            'simpanan_sukarela' => 'nullable|numeric|min:0',
             
             // Validasi rekening (array)
             'rekenings' => 'required|array|min:1',
@@ -80,8 +85,11 @@ class UserController extends Controller
             'rekenings.*.type' => ['required', Rule::in(['bank', 'ewallet'])],
             'rekenings.*.number_rek' => 'required|string|max:100',
         ], [
-            'dana_simpanan.required' => 'Dana simpanan harus diisi',
-            'dana_simpanan.min' => 'Dana simpanan minimal 0',
+            'simpanan_pokok.required' => 'Simpanan pokok harus diisi',
+            'simpanan_pokok.min' => 'Simpanan pokok minimal 0',
+            'simpanan_wajib.required' => 'Simpanan wajib harus diisi',
+            'simpanan_wajib.min' => 'Simpanan wajib minimal 0',
+            'simpanan_sukarela.min' => 'Simpanan sukarela minimal 0',
             'rekenings.required' => 'Rekening harus diisi minimal 1',
             'rekenings.*.name.required' => 'Nama rekening harus diisi',
             'rekenings.*.type.required' => 'Tipe rekening harus dipilih',
@@ -110,9 +118,16 @@ class UserController extends Controller
                 'password' => Hash::make($validated['password']),
                 'phone' => $validated['phone'] ?? null,
                 'address' => $validated['address'] ?? null,
-                'dana_simpanan' => $validated['dana_simpanan'],
                 'role' => $validated['role'],
-                'status' => $validated['status'] ?? 'active', // Default active jika ada dana simpanan
+                'status' => $validated['status'] ?? 'active',
+            ]);
+
+            // Buat simpanan
+            $simpanan = Simpanan::create([
+                'user_id' => $user->id,
+                'simpanan_pokok' => $validated['simpanan_pokok'],
+                'simpanan_wajib' => $validated['simpanan_wajib'],
+                'simpanan_sukarela' => $validated['simpanan_sukarela'] ?? 0,
             ]);
 
             // Simpan rekening-rekening
@@ -125,18 +140,15 @@ class UserController extends Controller
                 ]);
             }
 
-            // Auto-create limit pinjaman jika ada dana simpanan
-            if ($validated['dana_simpanan'] > 0) {
-                $multiplier = 3; // Default 5x dana simpanan
-                $maxLimit = $validated['dana_simpanan'] * $multiplier;
-                
+            // Auto-create limit pinjaman dari simpanan_wajib + simpanan_sukarela
+            $totalSimpanan = $simpanan->simpanan_wajib + $simpanan->simpanan_sukarela;
+            if ($totalSimpanan > 0) {
                 LimitPinjaman::create([
                     'user_id' => $user->id,
-                    'max_limit' => $maxLimit,
-                    'available_limit' => $maxLimit,
+                    'max_limit' => $totalSimpanan,
+                    'available_limit' => $totalSimpanan,
                 ]);
             }
-
 
             DB::commit();
 
@@ -154,7 +166,7 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $user = User::with(['rekenings', 'limitPinjaman'])->findOrFail($id);
+        $user = User::with(['rekenings', 'limitPinjaman', 'simpanan'])->findOrFail($id);
         return view('admin.users.show', compact('user'));
     }
 
@@ -163,7 +175,7 @@ class UserController extends Controller
      */
     public function edit($id)
     {
-        $user = User::with(['rekenings'])->findOrFail($id);
+        $user = User::with(['rekenings', 'simpanan'])->findOrFail($id);
         return view('admin.users.edit', compact('user'));
     }
 
@@ -187,9 +199,13 @@ class UserController extends Controller
             'password' => 'nullable|string|min:8|confirmed',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
-            'dana_simpanan' => 'sometimes|required|numeric|min:0',
             'role' => ['sometimes', 'required', Rule::in(['admin', 'member'])],
             'status' => ['sometimes', 'required', Rule::in(['pending', 'active', 'inactive'])],
+            
+            // Validasi simpanan - optional saat update
+            'simpanan_pokok' => 'sometimes|numeric|min:0',
+            'simpanan_wajib' => 'sometimes|numeric|min:0',
+            'simpanan_sukarela' => 'sometimes|numeric|min:0',
             
             // Validasi rekening (array) - optional saat update
             'rekenings' => 'sometimes|array',
@@ -229,11 +245,26 @@ class UserController extends Controller
                 unset($validated['password']);
             }
 
-            // Simpan dana simpanan lama untuk cek perubahan
-            $danaSimpananLama = $user->dana_simpanan;
+            // Simpan simpanan data lama untuk cek perubahan
+            $simpananLama = $user->simpanan ? [
+                'wajib' => $user->simpanan->simpanan_wajib,
+                'sukarela' => $user->simpanan->simpanan_sukarela,
+            ] : null;
 
-            // Update user data
-            $user->update($validated);
+            // Update user data (exclude simpanan fields)
+            $userData = collect($validated)->except(['simpanan_pokok', 'simpanan_wajib', 'simpanan_sukarela', 'rekenings'])->toArray();
+            $user->update($userData);
+
+            // Update simpanan jika ada
+            if (isset($validated['simpanan_pokok']) || isset($validated['simpanan_wajib']) || isset($validated['simpanan_sukarela'])) {
+                if ($user->simpanan) {
+                    $user->simpanan->update([
+                        'simpanan_pokok' => $validated['simpanan_pokok'] ?? $user->simpanan->simpanan_pokok,
+                        'simpanan_wajib' => $validated['simpanan_wajib'] ?? $user->simpanan->simpanan_wajib,
+                        'simpanan_sukarela' => $validated['simpanan_sukarela'] ?? $user->simpanan->simpanan_sukarela,
+                    ]);
+                }
+            }
 
             // Update rekening jika ada
             if (isset($validated['rekenings'])) {
@@ -265,16 +296,20 @@ class UserController extends Controller
                 }
             }
 
-            // Update limit pinjaman jika dana simpanan berubah
-            if (isset($validated['dana_simpanan']) && $validated['dana_simpanan'] != $danaSimpananLama) {
-                $multiplier = 5; // Default 5x
-                $maxLimit = $validated['dana_simpanan'] * $multiplier;
+            // Update limit pinjaman jika simpanan wajib atau sukarela berubah
+            $simpananBaru = $user->simpanan ? [
+                'wajib' => $user->simpanan->simpanan_wajib,
+                'sukarela' => $user->simpanan->simpanan_sukarela,
+            ] : null;
+            
+            if ($simpananLama && $simpananBaru && ($simpananLama != $simpananBaru)) {
+                $totalSimpanan = $simpananBaru['wajib'] + $simpananBaru['sukarela'];
                 
                 LimitPinjaman::updateOrCreate(
                     ['user_id' => $user->id],
                     [
-                        'max_limit' => $maxLimit,
-                        'available_limit' => $maxLimit,
+                        'max_limit' => $totalSimpanan,
+                        'available_limit' => $totalSimpanan,
                     ]
                 );
             }

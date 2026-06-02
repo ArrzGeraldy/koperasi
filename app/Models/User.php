@@ -23,7 +23,6 @@ class User extends Authenticatable
         'password',
         'phone',
         'address',
-        'dana_simpanan',
         'role',
         'status',
     ];
@@ -48,7 +47,6 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'dana_simpanan' => 'decimal:2',
         ];
     }
 
@@ -66,6 +64,22 @@ class User extends Authenticatable
     public function limitPinjaman()
     {
         return $this->hasOne(LimitPinjaman::class);
+    }
+
+    /**
+     * Relasi ke Simpanan (One to One)
+     */
+    public function simpanan()
+    {
+        return $this->hasOne(Simpanan::class);
+    }
+
+    /**
+     * Relasi ke Setor Simpanan History (One to Many)
+     */
+    public function setorSimpananHistories()
+    {
+        return $this->hasMany(SetorSimpananHistory::class);
     }
 
     /**
