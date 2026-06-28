@@ -35,68 +35,75 @@
           <form action="{{ route('anggota.setor.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
 
-            <!-- Jenis Simpanan -->
+            <!-- Pilih Jenis Simpanan -->
             <div>
-              <label for="simpanan_type" class="block text-sm font-semibold text-gray-700 mb-2">
-                Jenis Simpanan <span class="text-red-500">*</span>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">
+                Pilih Jenis Simpanan <span class="text-red-500">*</span>
               </label>
-              <select 
-                id="simpanan_type" 
-                name="simpanan_type" 
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('simpanan_type') border-red-500 @enderror"
-                required
-              >
-                <option value="" disabled selected>Pilih Jenis Simpanan</option>
-                <option value="pokok" {{ old('simpanan_type') == 'pokok' ? 'selected' : '' }}>Simpanan Pokok</option>
-                <option value="wajib" {{ old('simpanan_type') == 'wajib' ? 'selected' : '' }}>Simpanan Wajib</option>
-                <option value="sukarela" {{ old('simpanan_type') == 'sukarela' ? 'selected' : '' }}>Simpanan Sukarela</option>
-              </select>
+              <div class="space-y-4">
+                @php
+                  $types = [
+                    'pokok' => 'Simpanan Pokok',
+                    'wajib' => 'Simpanan Wajib',
+                    'sukarela' => 'Simpanan Sukarela',
+                  ];
+                  $selectedTypes = old('simpanan_type', []);
+                @endphp
+
+                @foreach ($types as $type => $label)
+                  <div class="grid gap-4 sm:grid-cols-[auto_1fr] items-start p-4 border border-gray-200 rounded-lg">
+                    <div class="flex items-center gap-2 mt-1">
+                      <input
+                        type="checkbox"
+                        id="simpanan_{{ $type }}"
+                        name="simpanan_type[]"
+                        value="{{ $type }}"
+                        data-type="{{ $type }}"
+                        class="type-checkbox h-4 w-4 text-blue-600 border-gray-900 rounded"
+                        {{ in_array($type, $selectedTypes) ? 'checked' : '' }}
+                      />
+                      <label for="simpanan_{{ $type }}" class="font-semibold text-gray-700">
+                        {{ $label }}
+                      </label>
+                    </div>
+                    <div class="space-y-3">
+                      <div>
+                        <label for="amount_{{ $type }}" class="sr-only">Jumlah setor {{ $label }}</label>
+                        <input
+                          type="number"
+                          id="amount_{{ $type }}"
+                          name="amount[{{ $type }}]"
+                          placeholder="Jumlah setor untuk {{ $label }}"
+                          value="{{ old('amount.' . $type) }}"
+                          min="1000"
+                          step="1000"
+                          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('amount.' . $type) border-red-500 @enderror"
+                        />
+                        <p class="mt-1 text-xs text-gray-500">Minimal Rp 1.000 jika dipilih.</p>
+                        @error('amount.' . $type)
+                          <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                      </div>
+                      <div>
+                        <label for="bukti_setor_{{ $type }}" class="block text-sm font-semibold text-gray-700 mb-2">
+                          Bukti Setor {{ $label }} <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="file"
+                          id="bukti_setor_{{ $type }}"
+                          name="bukti_setor[{{ $type }}]"
+                          accept="image/*,.pdf"
+                          class="@error('bukti_setor.' . $type) border-red-500 @enderror"
+                        />
+                        @error('bukti_setor.' . $type)
+                          <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                      </div>
+                    </div>
+                  </div>
+                @endforeach
+              </div>
               @error('simpanan_type')
-                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-              @enderror
-            </div>
-
-            <!-- Jumlah Setor -->
-            <div>
-              <label for="amount" class="block text-sm font-semibold text-gray-700 mb-2">
-                Jumlah Setor (Rp) <span class="text-red-500">*</span>
-              </label>
-              <input 
-                type="number" 
-                id="amount" 
-                name="amount" 
-                placeholder="Contoh: 100000"
-                value="{{ old('amount') }}"
-                min="1000"
-                step="1000"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('amount') border-red-500 @enderror"
-                required
-              />
-              <p class="mt-1 text-xs text-gray-500">Minimal Rp 1.000</p>
-              @error('amount')
-                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-              @enderror
-            </div>
-
-            <!-- Bukti Setor -->
-            <div>
-              <label for="bukti_setor" class="block text-sm font-semibold text-gray-700 mb-2">
-                Bukti Setor (Foto/Scan) <span class="text-red-500">*</span>
-              </label>
-              <div class="relative">
-             
-                <input 
-                  type="file" 
-                  id="bukti_setor" 
-                  name="bukti_setor" 
-                  accept="image/*,.pdf"
-                />
-             
-              </div>
-              <div id="file-name" class="mt-2 text-sm text-gray-600 hidden">
-                <p>File: <span id="file-display" class="font-semibold text-blue-600"></span></p>
-              </div>
-              @error('bukti_setor')
                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
               @enderror
             </div>

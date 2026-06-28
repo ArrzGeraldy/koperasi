@@ -37,50 +37,95 @@ class SetorSimpananController extends Controller
     {
         // Validate request
         $validated = $request->validate([
-            'simpanan_type' => 'required|in:pokok,wajib,sukarela',
-            'amount' => 'required|numeric|min:1000',
-            'bukti_setor' => 'required|file|mimes:jpeg,png,jpg,pdf|max:5120',
+            'simpanan_type' => 'required|array|min:1',
+            'simpanan_type.*' => 'in:pokok,wajib,sukarela',
+            'amount.pokok' => 'nullable|numeric|min:1000',
+            'amount.wajib' => 'nullable|numeric|min:1000',
+            'amount.sukarela' => 'nullable|numeric|min:1000',
+            'bukti_setor.pokok' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:5120',
+            'bukti_setor.wajib' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:5120',
+            'bukti_setor.sukarela' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:5120',
         ], [
-            'simpanan_type.required' => 'Jenis simpanan harus dipilih',
-            'simpanan_type.in' => 'Jenis simpanan tidak valid',
-            'amount.required' => 'Jumlah setor harus diisi',
-            'amount.numeric' => 'Jumlah setor harus berupa angka',
-            'amount.min' => 'Jumlah setor minimal Rp 1.000',
-            'bukti_setor.required' => 'Bukti setor harus diunggah',
-            'bukti_setor.mimes' => 'File harus berformat JPEG, PNG, JPG, atau PDF',
-            'bukti_setor.max' => 'Ukuran file maksimal 5MB',
+            'simpanan_type.required' => 'Pilih minimal satu jenis simpanan',
+            'simpanan_type.array' => 'Pilihan jenis simpanan tidak valid',
+            'simpanan_type.*.in' => 'Jenis simpanan tidak valid',
+            'amount.pokok.numeric' => 'Jumlah setor Simpanan Pokok harus berupa angka',
+            'amount.pokok.min' => 'Jumlah setor Simpanan Pokok minimal Rp 1.000',
+            'amount.wajib.numeric' => 'Jumlah setor Simpanan Wajib harus berupa angka',
+            'amount.wajib.min' => 'Jumlah setor Simpanan Wajib minimal Rp 1.000',
+            'amount.sukarela.numeric' => 'Jumlah setor Simpanan Sukarela harus berupa angka',
+            'amount.sukarela.min' => 'Jumlah setor Simpanan Sukarela minimal Rp 1.000',
+            'bukti_setor.pokok.file' => 'Bukti setor Simpanan Pokok harus berupa file',
+            'bukti_setor.pokok.mimes' => 'File bukti setor Simpanan Pokok harus berformat JPEG, PNG, JPG, atau PDF',
+            'bukti_setor.pokok.max' => 'Ukuran file bukti setor Simpanan Pokok maksimal 5MB',
+            'bukti_setor.wajib.file' => 'Bukti setor Simpanan Wajib harus berupa file',
+            'bukti_setor.wajib.mimes' => 'File bukti setor Simpanan Wajib harus berformat JPEG, PNG, JPG, atau PDF',
+            'bukti_setor.wajib.max' => 'Ukuran file bukti setor Simpanan Wajib maksimal 5MB',
+            'bukti_setor.sukarela.file' => 'Bukti setor Simpanan Sukarela harus berupa file',
+            'bukti_setor.sukarela.mimes' => 'File bukti setor Simpanan Sukarela harus berformat JPEG, PNG, JPG, atau PDF',
+            'bukti_setor.sukarela.max' => 'Ukuran file bukti setor Simpanan Sukarela maksimal 5MB',
         ]);
 
         $user = Auth::user();
+        $selectedTypes = $validated['simpanan_type'] ?? [];
+        $amounts = $validated['amount'] ?? [];
 
-        // Handle file upload
-        $filePath = null;
-        if ($request->hasFile('bukti_setor')) {
-            $file = $request->file('bukti_setor');
-            $filePath = $file->store('setor-simpanan/' . $user->id, 'public');
+        $fileUploads = $request->file('bukti_setor', []);
+
+        foreach ($selectedTypes as $type) {
+            if (empty($amounts[$type]) || !is_numeric($amounts[$type]) || $amounts[$type] < 1000) {
+                return back()
+                    ->withErrors(['amount.' . $type => 'Jumlah setor untuk ' . ($type === 'pokok' ? 'Simpanan Pokok' : ($type === 'wajib' ? 'Simpanan Wajib' : 'Simpanan Sukarela')) . ' harus diisi minimal Rp 1.000'])
+                    ->withInput();
+            }
+
+            if (empty($fileUploads[$type]) || !$fileUploads[$type]->isValid()) {
+                return back()
+                    ->withErrors(['bukti_setor.' . $type => 'Bukti setor untuk ' . ($type === 'pokok' ? 'Simpanan Pokok' : ($type === 'wajib' ? 'Simpanan Wajib' : 'Simpanan Sukarela')) . ' harus diunggah'])
+                    ->withInput();
+            }
         }
 
-        // Create setor simpanan history record
-        $setorHistory = SetorSimpananHistory::create([
-            'user_id' => $user->id,
-            'simpanan_type' => $validated['simpanan_type'],
-            'amount' => $validated['amount'],
-            'bukti_setor' => $filePath,
-        ]);
+        // Handle file uploads per selected type
+        $filePaths = [];
+        foreach ($selectedTypes as $type) {
+            if (!empty($fileUploads[$type]) && $fileUploads[$type]->isValid()) {
+                $filePaths[$type] = $fileUploads[$type]->store('setor-simpanan/' . $user->id, 'public');
+            }
+        }
 
-        // Format jenis simpanan
-        $jenisSimpanan = match($validated['simpanan_type']) {
-            'pokok' => 'Simpanan Pokok',
-            'wajib' => 'Simpanan Wajib',
-            'sukarela' => 'Simpanan Sukarela',
-        };
+        // Create setor simpanan history records for each selected type
+        foreach ($selectedTypes as $type) {
+            SetorSimpananHistory::create([
+                'user_id' => $user->id,
+                'simpanan_type' => $type,
+                'amount' => $amounts[$type],
+                'bukti_setor' => $filePaths[$type] ?? null,
+            ]);
+        }
 
         // Send WhatsApp notification to admin
+        $jenisSimpananText = collect($selectedTypes)->map(function ($type) {
+            return match ($type) {
+                'pokok' => 'Simpanan Pokok',
+                'wajib' => 'Simpanan Wajib',
+                'sukarela' => 'Simpanan Sukarela',
+            };
+        })->implode(', ');
+
+        $jumlahText = collect($selectedTypes)->map(function ($type) use ($amounts) {
+            return match ($type) {
+                'pokok' => 'Pokok: Rp ' . number_format($amounts[$type], 0, ',', '.'),
+                'wajib' => 'Wajib: Rp ' . number_format($amounts[$type], 0, ',', '.'),
+                'sukarela' => 'Sukarela: Rp ' . number_format($amounts[$type], 0, ',', '.'),
+            };
+        })->implode('\n');
+
         $message = "NOTIFIKASI SETOR SIMPANAN BARU\n\n"
             . "Nama Member: {$user->name}\n"
             . "No. HP: {$user->phone}\n"
-            . "Jenis Simpanan: {$jenisSimpanan}\n"
-            . "Jumlah: Rp " . number_format($validated['amount'], 0, ',', '.') . "\n"
+            . "Jenis Simpanan: {$jenisSimpananText}\n"
+            . "Jumlah:\n{$jumlahText}\n"
             . "Status: Menunggu Persetujuan\n"
             . "Silakan cek dan proses segera!";
 

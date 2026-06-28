@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Pinjaman;
 use App\Models\LimitPinjaman;
+use App\Models\Simpanan;
 use App\Models\User;
 use App\Models\PembayaranCicilan;
 use Illuminate\Http\Request;
@@ -22,7 +23,7 @@ class DashboardController extends Controller
                            ->count();
         
         // Total dana simpanan dari semua anggota
-        $danaSimpanan = 7777777;
+        $danaSimpanan = Simpanan::selectRaw('SUM(simpanan_pokok + simpanan_wajib + simpanan_sukarela) as total')->value('total') ?? 0;
         
         // Total semua pinjaman yang pernah diajukan
         $totalPinjaman = Pinjaman::sum('jumlah_pinjaman');
