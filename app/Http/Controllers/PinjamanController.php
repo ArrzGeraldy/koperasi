@@ -303,7 +303,7 @@ class PinjamanController extends Controller
 
         DB::beginTransaction();
         try {
-            $pinjaman = Pinjaman::findOrFail($id);
+            $pinjaman = Pinjaman::with('user')->findOrFail($id);
 
             if ($pinjaman->status !== 'pending') {
                 throw new \Exception('Pinjaman ini sudah diproses sebelumnya');
@@ -316,6 +316,15 @@ class PinjamanController extends Controller
             ]);
 
             DB::commit();
+
+            $message = "*Notifikasi Pinjaman Ditolak*\n\n" .
+                "No. Pinjaman: *" . $pinjaman->no_pinjaman . "*\n" .
+                "Alasan Penolakan: *" . $validated['alasan'] . "*\n\n" .
+                "Pengajuan pinjaman Anda ditolak.";
+
+            if ($pinjaman->user && $pinjaman->user->phone) {
+                WhatsAppservices::send($pinjaman->user->phone, $message);
+            }
 
             return redirect()->route('admin.pinjaman.show', $id)
                            ->with('success', 'Pinjaman berhasil ditolak');

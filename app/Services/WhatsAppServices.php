@@ -6,7 +6,20 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsAppservices
 {
-    protected static $token = "KrTJm7KroExi4GQjmGPj";
+    protected static $token;
+    protected static $noAdmin;
+
+    private static function init()
+    {
+        if (!self::$token) {
+            // Sangat disarankan lewat config(), tapi env() langsung juga bisa jika tidak di-cache
+            self::$token = env('FONNTE_API_TOKEN');
+        }
+        if (!self::$noAdmin) {
+            self::$noAdmin = env('NO_ADMIN');
+        }
+    }
+
     private static function normalizePhoneNumber($no): string
     {
         $no = (string) $no;
@@ -40,6 +53,7 @@ class WhatsAppservices
 
     public static function send($no, $message)
     {
+        self::init();
         try {
             //code...
             $target = self::normalizePhoneNumber($no);
@@ -64,9 +78,10 @@ class WhatsAppservices
     }
     public static function sendToAdmin($message)
     {
+        self::init();
         try {
             //code...
-            $noAdmin = "08888406599";
+            $noAdmin = self::$noAdmin;
             $target = self::normalizePhoneNumber($noAdmin);
 
             if ($target === '') {

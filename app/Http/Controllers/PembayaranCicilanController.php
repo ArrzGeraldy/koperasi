@@ -149,6 +149,7 @@ class PembayaranCicilanController extends Controller
 
             $cicilan = $pembayaran->cicilan;
             $pinjaman = $cicilan->pinjaman;
+            $user = $pinjaman->user;
 
             // Update pembayaran
             $pembayaran->update([
@@ -187,6 +188,16 @@ class PembayaranCicilanController extends Controller
 
             DB::commit();
 
+            $message = "*Pembayaran Cicilan Diverifikasi*\n\n" .
+                "No. Pinjaman: *" . $pinjaman->no_pinjaman . "*\n" .
+                "No. Cicilan: *" . $cicilan->no_cicilan . "*\n" .
+                "Status: *Lunas*\n\n" .
+                "Pembayaran cicilan Anda telah berhasil diverifikasi.";
+
+            if ($user && $user->phone) {
+                WhatsAppservices::send($user->phone, $message);
+            }
+
             return redirect()->back()
                            ->with('success', 'Pembayaran cicilan berhasil diverifikasi');
 
@@ -210,7 +221,7 @@ class PembayaranCicilanController extends Controller
 
         DB::beginTransaction();
         try {
-            $pembayaran = PembayaranCicilan::with('cicilan')->findOrFail($pembayaranId);
+            $pembayaran = PembayaranCicilan::with(['cicilan.pinjaman.user'])->findOrFail($pembayaranId);
             
             // Check if already verified
             if ($pembayaran->isVerified()) {
@@ -218,6 +229,7 @@ class PembayaranCicilanController extends Controller
             }
 
             $cicilan = $pembayaran->cicilan;
+            $user = $cicilan->pinjaman->user;
 
             // Delete bukti transfer file
             if (Storage::disk('public')->exists($pembayaran->bukti_transfer)) {
@@ -233,11 +245,22 @@ class PembayaranCicilanController extends Controller
             $cicilan->update([
                 'status' => Cicilan::STATUS_REJECTED,
             ]);
+            
 
             // Delete pembayaran record
             $pembayaran->delete();
 
             DB::commit();
+
+            $message = "*Notifikasi Pembayaran Cicilan Ditolak*\n\n" .
+                "No. Pinjaman: *" . $cicilan->pinjaman->no_pinjaman . "*\n" .
+                "No. Cicilan: *" . $cicilan->no_cicilan . "*\n" .
+                "Alasan Penolakan: *" . $validated['rejection_note'] . "*\n\n" .
+                "Silakan upload ulang bukti pembayaran Anda.";
+
+            if ($user && $user->phone) {
+                WhatsAppservices::send($user->phone, $message);
+            }
 
             return redirect()->back()
                            ->with('success', 'Pembayaran ditolak. Anggota dapat mengupload ulang bukti pembayaran.');
