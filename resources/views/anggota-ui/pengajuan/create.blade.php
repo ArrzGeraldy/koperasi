@@ -148,7 +148,7 @@
 
                             <!-- Bunga -->
                             <div class="flex justify-between items-center pb-3 border-b border-gray-200">
-                                <span class="text-sm text-gray-600">Bunga (30%)</span>
+                                <span class="text-sm text-gray-600">Bunga (20%)</span>
                                 <span class="text-sm font-bold text-orange-600" id="sim-bunga">Rp 0</span>
                             </div>
 
@@ -204,7 +204,7 @@
 
             function calculateSimulasi() {
                 const pokok = parseFloat(jumlahInput.value) || 0;
-                const bunga = pokok * 0.30; // 30%
+                const bunga = pokok * 0.20; // 30%
                 const total = pokok + bunga;
                 const cicilan = total / 10; // 10 bulan
 
