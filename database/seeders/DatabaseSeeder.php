@@ -25,5 +25,14 @@ class DatabaseSeeder extends Seeder
             'role' => 'admin',
             'status' => 'active'
         ]);
+
+        // Ketua Koperasi account
+        User::factory()->create([
+            'name' => 'ketua koperasi',
+            'email' => 'ketua@gmail.com',
+            'password' => Hash::make("ketua123"),
+            'role' => 'ketua koperasi',
+            'status' => 'active'
+        ]);
     }
 }
