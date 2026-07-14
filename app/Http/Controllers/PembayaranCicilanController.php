@@ -29,7 +29,7 @@ class PembayaranCicilanController extends Controller
     /**
      * Show form for uploading payment proof
      */
-    public function create($cicilanId)
+    public function create(Request $request, $cicilanId)
     {
         $user = Auth::user();
         
@@ -52,7 +52,8 @@ class PembayaranCicilanController extends Controller
                            ->with('error', 'Cicilan ini sudah lunas');
         }
         
-        return view('anggota-ui.bayar-cicilan', compact('user', 'cicilan'));
+        $isFullRequested = $request->boolean('full');
+        return view('anggota-ui.bayar-cicilan', compact('user', 'cicilan', 'isFullRequested'));
     }
 
     /**
@@ -63,6 +64,7 @@ class PembayaranCicilanController extends Controller
         $validated = $request->validate([
             'bukti_transfer' => 'required|image|mimes:jpg,jpeg,png,pdf|max:2048',
             'tanggal_transfer' => 'required|date|before_or_equal:today',
+            'is_full_payment' => 'nullable|boolean',
         ], [
             'bukti_transfer.required' => 'Bukti transfer harus diupload',
             'bukti_transfer.image' => 'File harus berupa gambar',
@@ -97,6 +99,7 @@ class PembayaranCicilanController extends Controller
                 'cicilan_id' => $cicilan->id,
                 'bukti_transfer' => $path,
                 'tanggal_transfer' => $validated['tanggal_transfer'],
+                'is_full_payment' => $request->has('is_full_payment') ? (bool) $request->get('is_full_payment') : false,
             ]);
 
             // Update cicilan status to pending_verification
@@ -157,18 +160,54 @@ class PembayaranCicilanController extends Controller
                 'acc_at' => now(),
             ]);
 
-            // Update cicilan
-            $cicilan->update([
-                'status' => Cicilan::STATUS_PAID,
-                'paid_amount' => $cicilan->amount,
-                'paid_date' => now(),
-            ]);
+            // If this payment is marked as full payment, mark all unpaid cicilans as paid
+            if ($pembayaran->is_full_payment) {
+                $unpaid = $pinjaman->cicilans()->where('status', '!=', Cicilan::STATUS_PAID)->get();
+                $totalPaid = 0;
+                foreach ($unpaid as $uc) {
+                    $sisa = max(0, $uc->amount - $uc->paid_amount);
+                    $uc->update([
+                        'status' => Cicilan::STATUS_PAID,
+                        'paid_amount' => $uc->amount,
+                        'paid_date' => now(),
+                    ]);
+                    $totalPaid += $sisa;
+                }
 
-            // Update pinjaman
-            $pinjaman->update([
-                'paid_amount' => $pinjaman->paid_amount + $cicilan->amount,
-                'remaining_amount' => $pinjaman->remaining_amount - $cicilan->amount,
-            ]);
+                // Update pinjaman totals
+                $pinjaman->update([
+                    'paid_amount' => $pinjaman->paid_amount + $totalPaid,
+                    'remaining_amount' => max(0, $pinjaman->remaining_amount - $totalPaid),
+                ]);
+
+                // If loan fully paid, mark completed and restore limit
+                if ($pinjaman->remaining_amount <= 0) {
+                    $pinjaman->update([
+                        'status' => 'completed',
+                        'completed_date' => now(),
+                    ]);
+
+                    if ($pinjaman->user->limitPinjaman) {
+                        $limitPinjaman = $pinjaman->user->limitPinjaman;
+                        $limitPinjaman->update([
+                            'available_limit' => $limitPinjaman->available_limit + $pinjaman->jumlah_pinjaman,
+                        ]);
+                    }
+                }
+            } else {
+                // Update single cicilan
+                $cicilan->update([
+                    'status' => Cicilan::STATUS_PAID,
+                    'paid_amount' => $cicilan->amount,
+                    'paid_date' => now(),
+                ]);
+
+                // Update pinjaman
+                $pinjaman->update([
+                    'paid_amount' => $pinjaman->paid_amount + $cicilan->amount,
+                    'remaining_amount' => $pinjaman->remaining_amount - $cicilan->amount,
+                ]);
+            }
 
             // Check if pinjaman is completed
             if ($pinjaman->remaining_amount <= 0) {

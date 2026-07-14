@@ -18,11 +18,13 @@ class PembayaranCicilan extends Model
         'acc_by',
         'acc_at',
         'rejection_note',
+        'is_full_payment',
     ];
 
     protected $casts = [
         'tanggal_transfer' => 'date',
         'acc_at' => 'datetime',
+        'is_full_payment' => 'boolean',
     ];
 
     /**

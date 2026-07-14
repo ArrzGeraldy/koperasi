@@ -67,6 +67,18 @@
                     @endif
                 </div>
 
+                @php
+                    $firstUnpaid = $pinjaman->cicilans->firstWhere('status', 'unpaid');
+                @endphp
+
+                @if($firstUnpaid)
+                <div class="mb-4 flex justify-end">
+                    <a href="{{ route('anggota.pembayaran-cicilan.create', $firstUnpaid->id) }}?full=1" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-medium">
+                        Sekali Bayar - Lunasi Seluruh Sisa
+                    </a>
+                </div>
+                @endif
+
                 <x-flash-message />
 
                 <!-- Cicilan Cards -->

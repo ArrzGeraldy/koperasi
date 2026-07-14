@@ -120,6 +120,16 @@
                             </div>
                         </div>
 
+                        <!-- Sekali Bayar -->
+                        <div class="mb-6 bg-green-50 border-l-4 border-green-400 p-4">
+                            <label class="inline-flex items-center space-x-3">
+                                <input id="is_full_payment_cb" type="checkbox" name="is_full_payment_cb" class="form-checkbox h-5 w-5 text-green-600" {{ (!empty($isFullRequested) && $isFullRequested) ? 'checked' : '' }} />
+                                <span class="text-sm font-medium text-green-800">Sekali Bayar - Lunasi seluruh sisa pinjaman</span>
+                            </label>
+                            <p id="full_amount_text" class="text-sm text-green-700 mt-2">Jumlah yang harus dibayar (sisa pinjaman): <strong>Rp {{ number_format($cicilan->pinjaman->remaining_amount,0,',','.') }}</strong></p>
+                        </div>
+                        <input type="hidden" id="is_full_payment" name="is_full_payment" value="{{ (!empty($isFullRequested) && $isFullRequested) ? '1' : '0' }}" />
+
                         <!-- Buttons -->
                         <div class="flex justify-end space-x-3">
                             <a href="{{ route('anggota.cicilans', $cicilan->pinjaman_id) }}" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition duration-200">
@@ -130,6 +140,28 @@
                             </button>
                         </div>
                     </form>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            var cb = document.getElementById('is_full_payment_cb');
+                            var hidden = document.getElementById('is_full_payment');
+                            var fullText = document.getElementById('full_amount_text');
+                            cb.addEventListener('change', function() {
+                                hidden.value = cb.checked ? '1' : '0';
+                                if (cb.checked) {
+                                    fullText.style.display = 'block';
+                                } else {
+                                    fullText.style.display = 'none';
+                                }
+                            });
+                            // initialize
+                            if (hidden.value === '1' || cb.checked) {
+                                cb.checked = true;
+                                fullText.style.display = 'block';
+                            } else {
+                                fullText.style.display = 'none';
+                            }
+                        });
+                    </script>
                 </div>
             </div>
         </div>

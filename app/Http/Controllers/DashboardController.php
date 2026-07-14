@@ -8,9 +8,11 @@ use App\Models\LimitPinjaman;
 use App\Models\Simpanan;
 use App\Models\User;
 use App\Models\PembayaranCicilan;
+use App\Models\SetorSimpananHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -48,6 +50,83 @@ class DashboardController extends Controller
             'pinjamanAktif',
             'recentPayments'
         ));
+    }
+    /**
+     * Print members summary (A4 landscape)
+     */
+    public function printMembers(Request $request)
+    {
+        $month = (int) $request->get('month', now()->month);
+        $year = (int) $request->get('year', now()->year);
+
+        try {
+            $endDate = Carbon::createFromDate($year, $month, 1)->endOfMonth()->toDateString();
+        } catch (\Exception $e) {
+            $endDate = now()->endOfMonth()->toDateString();
+        }
+
+        $members = User::where('role', 'member')
+                       ->orderBy('name')
+                       ->get();
+
+        $data = $members->map(function($user) use ($endDate) {
+            // Sum approved setoran sampai dengan endDate
+            $pokok = SetorSimpananHistory::where('user_id', $user->id)
+                        ->where('simpanan_type', 'pokok')
+                        ->where('status', 'approved')
+                        ->whereDate('created_at', '<=', $endDate)
+                        ->sum('amount');
+
+            $wajib = SetorSimpananHistory::where('user_id', $user->id)
+                        ->where('simpanan_type', 'wajib')
+                        ->where('status', 'approved')
+                        ->whereDate('created_at', '<=', $endDate)
+                        ->sum('amount');
+
+            $sukarela = SetorSimpananHistory::where('user_id', $user->id)
+                        ->where('simpanan_type', 'sukarela')
+                        ->where('status', 'approved')
+                        ->whereDate('created_at', '<=', $endDate)
+                        ->sum('amount');
+
+            // Fallback to current simpanan if history not present
+            $simpanan = $user->simpanan;
+            if (!$pokok && $simpanan) $pokok = $simpanan->simpanan_pokok ?? 0;
+            if (!$wajib && $simpanan) $wajib = $simpanan->simpanan_wajib ?? 0;
+            if (!$sukarela && $simpanan) $sukarela = $simpanan->simpanan_sukarela ?? 0;
+
+            $total_simpanan = $pokok + $wajib + $sukarela;
+
+            $pinjamanCount = Pinjaman::where('user_id', $user->id)
+                            ->whereDate('applied_date', '<=', $endDate)
+                            ->count();
+
+            $totalPinjaman = Pinjaman::where('user_id', $user->id)
+                            ->whereDate('applied_date', '<=', $endDate)
+                            ->sum('jumlah_pinjaman');
+
+            $outstanding = Pinjaman::where('user_id', $user->id)
+                            ->whereNotNull('disbursed_date')
+                            ->whereDate('disbursed_date', '<=', $endDate)
+                            ->sum('remaining_amount');
+
+            return (object) [
+                'user' => $user,
+                'simpanan_pokok' => $pokok,
+                'simpanan_wajib' => $wajib,
+                'simpanan_sukarela' => $sukarela,
+                'total_simpanan' => $total_simpanan,
+                'pinjaman_count' => $pinjamanCount,
+                'total_pinjaman' => $totalPinjaman,
+                'outstanding' => $outstanding,
+            ];
+        });
+
+        return view('admin.print.members_summary', [
+            'members' => $data,
+            'selectedMonth' => $month,
+            'selectedYear' => $year,
+        ]);
     }
     public function anggota()
     {

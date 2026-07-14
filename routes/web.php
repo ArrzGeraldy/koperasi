@@ -36,6 +36,7 @@ Route::middleware('auth')->name('anggota.')->group(function () {
     
     // Cicilan & Pinjaman
     Route::get('/anggota/pinjaman/{id}/cicilans', [DashboardController::class, 'cicilans'])->name('cicilans');
+    
     Route::get('/anggota/riwayat', [DashboardController::class, 'riwayat'])->name('riwayat');
     
     // Pembayaran Cicilan
@@ -49,6 +50,8 @@ Route::middleware('auth')->name('anggota.')->group(function () {
 Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'admin'])->name('dashboard');
+    // Print members summary (A4 landscape)
+    Route::get('/print/members', [DashboardController::class, 'printMembers'])->name('print.members');
     
     // Pinjaman Management
     Route::prefix('pinjaman')->name('pinjaman.')->group(function () {
