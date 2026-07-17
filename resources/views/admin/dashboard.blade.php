@@ -29,9 +29,15 @@
       <x-topbar />
       <!-- main content -->
         <main class="flex-1 overflow-y-auto p-6">
-          <div class="mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">Dashboard Admin</h1>
-            <p class="text-gray-600">Ringkasan data koperasi</p>
+          <div class="mb-6 flex items-center justify-between gap-4">
+            <div>
+              <h1 class="text-2xl font-bold text-gray-800">Dashboard Admin</h1>
+              <p class="text-gray-600">Ringkasan data koperasi</p>
+            </div>
+            <a href="{{ route('admin.print.members') }}"
+               class="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-700">
+              Buka Halaman Print
+            </a>
           </div>
 
           <!-- Statistics Cards -->
